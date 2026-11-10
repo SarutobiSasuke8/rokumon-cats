@@ -1,0 +1,2078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#efeae2" />
+<meta name="color-scheme" content="light" />
+<title>Rokumon Cats</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232c2622'/%3E%3Ccircle cx='16' cy='18' r='8' fill='%23f4e7d4'/%3E%3Cpath d='M10 12l2.2 5h-3.2zM22 12l-2.2 5h3.2z' fill='%23e7d3b6'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #efeae2;
+    --bg-elevated: #f7f4ef;
+    --ink: #1c1916;
+    --muted: #6e685f;
+    --line: #e2dbd1;
+    --accent: #2f4a43;
+    --accent-fg: #f6f3ee;
+    --danger: #8d3a32;
+    --paper: #f6f3ee;
+    --display: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+    --body: "Segoe UI", system-ui, sans-serif;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --radius-sheet: 32px;
+    --radius-btn: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.45;
+    touch-action: none;
+    overscroll-behavior: none;
+  }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  button:disabled { cursor: default; opacity: 0.42; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .app {
+    height: 100dvh;
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    user-select: none;
+  }
+  .top {
+    position: relative;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 0;
+  }
+  .brand h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .kicker {
+    margin: 0 0 2px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .tools { display: flex; gap: 8px; }
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-btn);
+    border: 1px solid var(--line);
+    background: var(--bg-elevated);
+    color: var(--ink);
+    transition: transform 150ms var(--ease), background-color 150ms var(--ease);
+  }
+  .icon-btn:active { transform: scale(0.98); }
+  .icon-btn[hidden] { display: none; }
+  .mobile-stats {
+    position: relative;
+    z-index: 6;
+    display: flex;
+    gap: 18px;
+    align-items: baseline;
+    padding: 6px 16px 4px;
+  }
+  .mobile-stats[hidden] { display: none !important; }
+  .stat .num { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
+  .stat .num.lg { font-size: 1.55rem; }
+  .stat .num.sm { font-size: 1rem; }
+  .stage { position: relative; min-height: 0; background: var(--bg); }
+  #view { width: 100%; height: 100%; display: block; touch-action: none; }
+  .combo, .toast {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    margin: 0;
+  }
+  .combo {
+    top: 16%;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .toast {
+    top: 10%;
+    font-family: var(--display);
+    font-size: 1.45rem;
+    color: var(--paper);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+  .dock {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 8px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: var(--bg);
+  }
+  .dock[hidden] { display: none !important; }
+  .dock .stats { display: none; }
+  .previews { display: flex; gap: 10px; }
+  figure { margin: 0; width: 76px; text-align: center; }
+  figcaption {
+    margin-top: 2px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  figcaption span {
+    display: block;
+    margin-top: 1px;
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  canvas.mini { width: 56px; height: 56px; display: block; }
+  .btn {
+    min-height: 44px;
+    border-radius: var(--radius-btn);
+    border: 1px solid transparent;
+    padding: 0 16px;
+    background: var(--accent);
+    color: var(--accent-fg);
+    font-weight: 600;
+    transition: transform 150ms var(--ease), background-color 150ms var(--ease);
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn.secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.block { width: 100%; }
+  .hint { margin: 0; color: var(--muted); font-size: 0.8rem; }
+  .hint-keys { display: none; }
+  .pips { display: none; gap: 5px; }
+  .pips span { width: 8px; height: 8px; border-radius: 99px; background: var(--line); display: block; }
+  .pips span.on { background: var(--accent); }
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    display: grid;
+    place-items: center;
+    padding: 80px 16px 24px;
+    background: rgba(28, 25, 22, 0.46);
+  }
+  .overlay[hidden] { display: none !important; }
+  .sheet {
+    width: min(440px, 100%);
+    max-height: min(78dvh, 720px);
+    overflow: auto;
+    background: var(--bg-elevated);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sheet);
+    padding: 20px;
+    box-shadow: 0 24px 48px rgba(28, 25, 22, 0.16);
+  }
+  .sheet h2 {
+    margin: 0 0 8px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1.7rem;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+  .sheet p { margin: 0 0 12px; }
+  .stack { display: grid; gap: 8px; margin-top: 8px; }
+  .sub { color: var(--muted); font-size: 0.9rem; }
+  .meta { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 0.85rem; margin-top: 14px; }
+  .portrait { display: grid; justify-items: center; gap: 4px; margin: 8px 0 12px; }
+  .portrait canvas { width: 140px; height: 140px; }
+  .best-flag { margin: 0 0 8px; font-weight: 600; color: var(--accent); }
+  .rules { margin: 0; padding-left: 1.1rem; }
+  .rules li { margin: 4px 0; }
+  .tiers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 12px;
+    font-size: 0.85rem;
+  }
+  .tiers li { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 10px; height: 10px; border-radius: 99px; flex: none; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  @media (min-width: 960px) {
+    .app {
+      width: min(1080px, 100%);
+      margin-inline: auto;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      grid-template-rows: auto minmax(0, 1fr);
+    }
+    .top { grid-column: 1 / -1; }
+    .mobile-stats { display: none !important; }
+    .stage { grid-column: 1; grid-row: 2; }
+    .dock {
+      grid-column: 2;
+      grid-row: 2;
+      flex-direction: column;
+      align-items: stretch;
+      border-top: 0;
+      border-left: 1px solid var(--line);
+      padding: 20px 16px;
+    }
+    .dock .stats { display: flex; gap: 18px; }
+    .previews { justify-content: space-between; }
+    canvas.mini { width: 72px; height: 72px; }
+    .hint-touch { display: none; }
+    .hint-keys { display: block; }
+    .pips { display: flex; }
+    #undo { width: 100%; }
+  }
+  @media (max-height: 520px) {
+    .sheet h2 { font-size: 1.35rem; }
+    .overlay { padding-top: 64px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .btn, .icon-btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <header class="top">
+      <div class="brand">
+        <p class="kicker">Rokumon Games</p>
+        <h1>Rokumon Cats</h1>
+      </div>
+      <div class="tools">
+        <button class="icon-btn" id="pause-btn" type="button" aria-label="Pause" hidden></button>
+        <button class="icon-btn" id="help-btn" type="button" aria-label="How to play"></button>
+        <button class="icon-btn" id="sound" type="button" aria-label="Mute sound" aria-pressed="true"></button>
+      </div>
+    </header>
+    <div class="mobile-stats" id="mobile-stats" hidden>
+      <div class="stat">
+        <p class="kicker">Score</p>
+        <p class="num lg" data-bind="score">0</p>
+      </div>
+      <div class="stat">
+        <p class="kicker">Best</p>
+        <p class="num sm" data-bind="best">0</p>
+      </div>
+      <div class="stat">
+        <p class="kicker">Highest</p>
+        <p class="num sm" data-bind="highest">—</p>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="view" aria-label="Cat bowl. Drag and release to drop a cat."></canvas>
+      <p class="combo" id="combo" hidden>Chain ×2</p>
+      <p class="toast" id="toast" hidden></p>
+    </div>
+    <aside class="dock" id="dock" hidden>
+      <div class="stats">
+        <div class="stat">
+          <p class="kicker">Score</p>
+          <p class="num lg" data-bind="score">0</p>
+        </div>
+        <div class="stat">
+          <p class="kicker">Best</p>
+          <p class="num sm" data-bind="best">0</p>
+        </div>
+        <div class="stat">
+          <p class="kicker">Highest</p>
+          <p class="num sm" data-bind="highest">—</p>
+        </div>
+      </div>
+      <p class="kicker" data-bind="mode">Free play</p>
+      <div class="pips" id="pips" aria-hidden="true"></div>
+      <div class="previews">
+        <figure>
+          <canvas class="mini" id="now-cat" width="64" height="64"></canvas>
+          <figcaption>Now<span data-bind="now-name"></span></figcaption>
+        </figure>
+        <figure>
+          <canvas class="mini" id="next-cat" width="64" height="64"></canvas>
+          <figcaption>Next<span data-bind="next-name"></span></figcaption>
+        </figure>
+      </div>
+      <button class="btn secondary" id="undo" type="button">Undo · 3</button>
+      <p class="hint hint-touch">Drag and release to drop.</p>
+      <p class="hint hint-keys">Arrows or A and D aim. Space drops. U undoes.</p>
+    </aside>
+  </div>
+
+  <div class="overlay" id="title">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="title-heading">
+      <p class="kicker">Drop and merge</p>
+      <h2 id="title-heading">Match and merge</h2>
+      <p>Drop matching cats. They merge into the next, larger cat. Stay under the line.</p>
+      <div class="stack">
+        <button class="btn block" id="play-free" type="button">Free play</button>
+        <button class="btn secondary block" id="play-daily" type="button">Daily challenge</button>
+        <button class="btn secondary block" id="open-help" type="button">How to play</button>
+      </div>
+      <div class="meta">
+        <span>Best <span data-bind="best-score">0</span> · <span data-bind="best-cat">None yet</span></span>
+        <span data-bind="collection">Collection 0/11</span>
+      </div>
+      <p class="sub" data-bind="daily-best">UTC daily</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="help" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <p class="kicker">How to play</p>
+      <h2 id="help-title">Two of a kind</h2>
+      <ol class="rules">
+        <li>Aim along the top of the bowl and drop the waiting cat.</li>
+        <li>When two cats of the same size touch, they become the next cat.</li>
+        <li>Chains within a short beat score more. Rokumon, the last cat, does not merge.</li>
+        <li>The run ends if cats settle above the limit line.</li>
+      </ol>
+      <p class="sub">Free play gives three undos. The daily challenge shares one drop order until UTC midnight and allows one undo. Aim with a mouse, a finger, or the arrow keys, then drop.</p>
+      <canvas id="tier-strip" style="width:100%;height:84px" aria-hidden="true"></canvas>
+      <ol class="tiers" id="tier-list"></ol>
+      <button class="btn block" id="help-close" type="button">Close</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="pause" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <h2 id="pause-title">Paused</h2>
+      <p class="sub">The bowl is holding still.</p>
+      <div class="stack">
+        <button class="btn block" id="pause-resume" type="button">Resume</button>
+        <button class="btn secondary block" id="pause-help" type="button">How to play</button>
+        <button class="btn secondary block" id="pause-leave" type="button">Leave run</button>
+      </div>
+      <p class="sub">Leaving discards this run and does not submit a score.</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="result" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="result-title">
+      <p class="kicker" data-bind="result-mode">Free play</p>
+      <h2 id="result-title">The bowl overflowed</h2>
+      <p class="best-flag" id="result-best" hidden>New best</p>
+      <div class="portrait">
+        <canvas id="result-cat" width="140" height="140"></canvas>
+        <p class="kicker">Highest · <span data-bind="result-tier">—</span></p>
+      </div>
+      <p class="num lg" data-bind="result-score" style="font-size:2.4rem;margin:0">0</p>
+      <p class="sub">Merges <span data-bind="result-merges">0</span> · Best chain <span data-bind="result-combo">0</span></p>
+      <div class="stack">
+        <button class="btn block" id="result-again" type="button">Play again</button>
+        <button class="btn secondary block" id="result-undo" type="button">Undo last drop</button>
+        <button class="btn secondary block" id="result-title" type="button">Title</button>
+      </div>
+    </div>
+  </div>
+  <p class="sr" id="live" aria-live="polite"></p>
+  <noscript><p style="padding:24px">Rokumon Cats needs JavaScript to play.</p></noscript>
+<script>
+(function () {
+  "use strict";
+
+  const VERSION = "1.0.0";
+  const SAVE_KEY = "rokumon-cats.v1";
+  const STEP = 1 / 120;
+  const GRAVITY = 1900;
+  const RESTITUTION = 0.04;
+  const FRICTION = 0.55;
+  const OVER_LIMIT = 1.05;
+  const OVER_AGE = 0.55;
+  const MERGE_POINTS = [0, 2, 4, 8, 16, 30, 52, 84, 130, 200, 320];
+  const CREST = [0, 10, 30, 60, 100, 160, 240, 360, 520, 760, 1100];
+  const DROP_WEIGHTS = [46, 28, 16, 7, 3];
+  const VIEW_W = 440;
+  const VIEW_H = 700;
+  const BOWL = { x: 24, y: 18, w: 392, h: 664, radius: 36 };
+  const INNER = {
+    left: BOWL.x + 20,
+    right: BOWL.x + BOWL.w - 20,
+    floor: BOWL.y + BOWL.h - 20,
+    line: BOWL.y + 156,
+    drop: BOWL.y + 72,
+  };
+  const TIERS = [
+    { id: "mote", name: "Mote", r: 16, body: "#f4e7d4", ear: "#e7d3b6", ink: "#3a332c", accent: "#e7b39a", blush: "#f0b6a4" },
+    { id: "kit", name: "Kit", r: 22, body: "#f6d2be", ear: "#e7b49a", ink: "#3a2c28", accent: "#d9836c", blush: "#f0a894" },
+    { id: "pip", name: "Pip", r: 29, body: "#f0c49a", ear: "#e0a56e", ink: "#3a2e24", accent: "#c97a3a", blush: "#f0b090" },
+    { id: "miso", name: "Miso", r: 36, body: "#f0d48a", ear: "#e2bc62", ink: "#3a3218", accent: "#c48a2e", blush: "#f0c0a0" },
+    { id: "nori", name: "Nori", r: 44, body: "#d5c7a4", ear: "#c2ae82", ink: "#2c2820", accent: "#6d8f68", blush: "#e7b8a4" },
+    { id: "mochi", name: "Mochi", r: 53, body: "#f0b7a4", ear: "#e29380", ink: "#3a2420", accent: "#c45b52", blush: "#f0a090" },
+    { id: "sora", name: "Sora", r: 63, body: "#e7a3b2", ear: "#d48396", ink: "#3a2028", accent: "#b24d66", blush: "#f0b0b4" },
+    { id: "hana", name: "Hana", r: 74, body: "#d989a4", ear: "#c46b88", ink: "#321820", accent: "#8d3d58", blush: "#f0a0b0" },
+    { id: "kumo", name: "Kumo", r: 86, body: "#a9b7c9", ear: "#8ea0b5", ink: "#1c2430", accent: "#4e6d8a", blush: "#e7b0b4" },
+    { id: "yuki", name: "Yuki", r: 99, body: "#d5e0ee", ear: "#b7c7dc", ink: "#1c2430", accent: "#5d7ea6", blush: "#f0c0c4" },
+    { id: "rokumon", name: "Rokumon", r: 112, body: "#f7f1e6", ear: "#1c1916", ink: "#1c1916", accent: "#8d3a32", blush: "#f0b8a8" },
+  ];
+
+  const ICON_SOUND = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h3l5-4v12l-5-4H4z"/><path d="M16 9.5a3.5 3.5 0 0 1 0 5"/></svg>';
+  const ICON_MUTE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 10h3l5-4v12l-5-4H4z"/><path d="M17 10l4 4M21 10l-4 4"/></svg>';
+  const ICON_HELP = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.7.3-1.2.8-1.2 1.6"/><path d="M12 17h.01"/></svg>';
+  const ICON_PAUSE = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 7v10M15 7v10"/></svg>';
+
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const canvas = document.getElementById("view");
+  const ctx = canvas.getContext("2d");
+  const stage = document.getElementById("stage");
+  const dock = document.getElementById("dock");
+  const titleEl = document.getElementById("title");
+  const helpEl = document.getElementById("help");
+  const pauseEl = document.getElementById("pause");
+  const resultEl = document.getElementById("result");
+  const toastEl = document.getElementById("toast");
+  const comboEl = document.getElementById("combo");
+  const mobileStats = document.getElementById("mobile-stats");
+
+  let save = loadSave();
+  let phase = "title";
+  let mode = "free";
+  let dailySeed = null;
+  let session = 0;
+  let rngState = 1;
+  let bodies = [];
+  let particles = [];
+  let floaters = [];
+  let rings = [];
+  let history = [];
+  let nextId = 1;
+  let current = 0;
+  let next = 1;
+  let aimX = (INNER.left + INNER.right) / 2;
+  let mergePoints = 0;
+  let maxTier = -1;
+  let combo = 0;
+  let maxCombo = 0;
+  let merges = 0;
+  let lastMergeAt = 0;
+  let overTimer = 0;
+  let lineHot = false;
+  let cooldown = 0;
+  let freeze = 0;
+  let reject = 0;
+  let ended = false;
+  let testing = false;
+  let celebratedBest = false;
+  let undosLeft = 3;
+  let undosStart = 3;
+  let runStarted = 0;
+  let allowFuse = true;
+  let acc = 0;
+  let lastTs = 0;
+  let trauma = 0;
+  let shakeClock = 0;
+  let toastTimer = 0;
+  let cssW = 1;
+  let cssH = 1;
+  let view = { dpr: 1, ox: 0, oy: 0, scale: 1 };
+  const keys = new Set();
+  const bindCache = new Map();
+  let pointerId = null;
+
+  function hashString(value) {
+    let h = 2166136261;
+    for (let i = 0; i < value.length; i++) {
+      h ^= value.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+
+  function rngNext() {
+    let a = rngState | 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    rngState = a >>> 0;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  function rollTier() {
+    let t = rngNext() * 100;
+    for (let i = 0; i < DROP_WEIGHTS.length; i++) {
+      t -= DROP_WEIGHTS[i];
+      if (t < 0) return i;
+    }
+    return 0;
+  }
+
+  function utcSeed(date) {
+    const now = date || new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(now.getUTCDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+
+  function formatSeed(seed) {
+    if (!seed) return "";
+    const parts = seed.split("-").map(Number);
+    const dt = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+    return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(dt);
+  }
+
+  function loadSave() {
+    const blank = {
+      version: 1,
+      sound: true,
+      seenHelp: false,
+      bestScore: 0,
+      bestTier: 0,
+      daily: { seed: "", score: 0, tier: 0 },
+      seen: [],
+    };
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return blank;
+      const data = JSON.parse(raw);
+      return {
+        ...blank,
+        ...data,
+        daily: { ...blank.daily, ...(data.daily || {}) },
+        seen: Array.isArray(data.seen) ? data.seen : [],
+      };
+    } catch (_) {
+      return blank;
+    }
+  }
+
+  function persist() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (_) {}
+  }
+
+  function tierRank() {
+    return maxTier < 0 ? 0 : maxTier + 1;
+  }
+
+  function totalScore() {
+    return mergePoints + (maxTier >= 0 ? CREST[maxTier] : 0);
+  }
+
+  function scorePayload(extra) {
+    const rank = tierRank();
+    const info = rank > 0 ? TIERS[rank - 1] : null;
+    return Object.assign({
+      score: totalScore(),
+      highestTier: rank,
+      highestTierId: info ? info.id : null,
+      highestTierName: info ? info.name : null,
+      mode: mode,
+      seed: mode === "daily" ? dailySeed : null,
+      merges: merges,
+      maxCombo: maxCombo,
+      session: session,
+      personalBest: save.bestScore,
+    }, extra || {});
+  }
+
+  function installHub() {
+    const prior = window.Hub;
+    const subs = { ready: [], score: [], event: [], gameOver: [] };
+    function emit(method, payload) {
+      const message = {
+        source: "rokumon-hub",
+        game: "rokumon-cats",
+        version: VERSION,
+        method: method,
+        payload: payload,
+        timestamp: Date.now(),
+      };
+      try {
+        if (window.parent && window.parent !== window) window.parent.postMessage(message, "*");
+      } catch (_) {}
+      (subs[method] || []).forEach(function (fn) {
+        try { fn(payload); } catch (_) {}
+      });
+      if (prior && typeof prior[method] === "function") {
+        try {
+          if (method === "event") prior.event(payload.name, payload);
+          else prior[method](payload);
+        } catch (_) {}
+      }
+    }
+    window.Hub = {
+      ready: function (payload) { emit("ready", payload || {}); },
+      score: function (payload) {
+        const body = payload || {};
+        body.score = Math.max(0, Math.round(Number(body.score) || 0));
+        body.highestTier = Math.max(0, Math.round(Number(body.highestTier) || 0));
+        emit("score", body);
+      },
+      event: function (name, data) { emit("event", Object.assign({ name: name }, data || {})); },
+      gameOver: function (payload) { emit("gameOver", payload || {}); },
+      on: function (method, fn) {
+        if (!subs[method]) return function () {};
+        subs[method].push(fn);
+        return function () {
+          const index = subs[method].indexOf(fn);
+          if (index >= 0) subs[method].splice(index, 1);
+        };
+      },
+    };
+  }
+
+  function hubScore(extra) {
+    if (testing) return;
+    window.Hub.score(scorePayload(extra));
+  }
+
+  const audio = {
+    ctx: null,
+    master: null,
+    voices: 0,
+    unlock: function () {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!this.ctx) {
+        this.ctx = new AC({ latencyHint: "interactive" });
+        this.master = this.ctx.createGain();
+        this.master.gain.value = save.sound ? 0.7 : 0;
+        this.master.connect(this.ctx.destination);
+      }
+      if (this.ctx.state === "suspended") this.ctx.resume();
+    },
+    setMuted: function (muted) {
+      if (!this.master || !this.ctx) return;
+      this.master.gain.setTargetAtTime(muted ? 0 : 0.7, this.ctx.currentTime, 0.02);
+    },
+    beep: function (freq, dur, type, gain, slide) {
+      if (!this.ctx || !save.sound || this.voices > 10) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = type || "sine";
+      osc.frequency.setValueAtTime(freq, t);
+      if (slide) osc.frequency.exponentialRampToValueAtTime(Math.max(48, freq + slide), t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(g);
+      g.connect(this.master);
+      osc.start(t);
+      osc.stop(t + dur + 0.02);
+      this.voices += 1;
+      osc.onended = function () {
+        audio.voices -= 1;
+        try { osc.disconnect(); g.disconnect(); } catch (_) {}
+      };
+    },
+    drop: function () { this.beep(210, 0.09, "sine", 0.08, -90); },
+    tick: function () { this.beep(440, 0.045, "triangle", 0.035, 0); },
+    merge: function (tier, chain) {
+      const f = 280 * Math.pow(1.07, tier);
+      this.beep(f, 0.14, "sine", 0.09, 36);
+      this.beep(f * 1.5, 0.16, "triangle", 0.035, 16);
+      if (chain >= 3) this.beep(f * 2, 0.18, "sine", 0.045, 70);
+    },
+    over: function () {
+      const self = this;
+      this.beep(320, 0.18, "sine", 0.07, -40);
+      setTimeout(function () { self.beep(240, 0.2, "sine", 0.06, -30); }, 130);
+      setTimeout(function () { self.beep(168, 0.3, "triangle", 0.05, -20); }, 270);
+    },
+  };
+
+  function bind(name, value) {
+    const text = String(value);
+    if (bindCache.get(name) === text) return;
+    bindCache.set(name, text);
+    document.querySelectorAll('[data-bind="' + name + '"]').forEach(function (el) {
+      el.textContent = text;
+    });
+  }
+
+  function announce(text) {
+    const el = document.getElementById("live");
+    el.textContent = "";
+    el.textContent = text;
+  }
+
+  function toast(text) {
+    toastEl.textContent = text;
+    toastEl.hidden = false;
+    toastTimer = 1.25;
+    if (!testing) announce(text);
+  }
+
+  function discover(tier) {
+    if (testing) return;
+    if (save.seen.indexOf(tier) === -1) {
+      save.seen.push(tier);
+      persist();
+      bind("collection", "Collection " + save.seen.length + "/11");
+    }
+  }
+
+  function considerBest() {
+    if (testing) return;
+    const score = totalScore();
+    const rank = tierRank();
+    const prev = save.bestScore;
+    let changed = false;
+    celebratedBest = false;
+    if (score > save.bestScore) {
+      save.bestScore = score;
+      celebratedBest = true;
+      changed = true;
+    }
+    if (rank > save.bestTier) {
+      save.bestTier = rank;
+      changed = true;
+    }
+    if (mode === "daily" && dailySeed && score > 0) {
+      if (save.daily.seed !== dailySeed || score > save.daily.score) {
+        const sameDay = save.daily.seed === dailySeed;
+        save.daily = {
+          seed: dailySeed,
+          score: Math.max(score, sameDay ? save.daily.score : 0),
+          tier: Math.max(rank, sameDay ? save.daily.tier : 0),
+        };
+        changed = true;
+      } else if (rank > save.daily.tier) {
+        save.daily.tier = rank;
+        changed = true;
+      }
+    }
+    if (changed) persist();
+    if (score > prev) celebratedBest = true;
+  }
+
+  function makeBody(tier, x, y) {
+    return {
+      id: nextId++,
+      tier: tier,
+      x: x,
+      y: y,
+      vx: 0,
+      vy: 0,
+      r: TIERS[tier].r,
+      spin: 0,
+      angle: 0,
+      arm: 0,
+      age: 0,
+      dead: false,
+    };
+  }
+
+  function wallResponse(b, bounce) {
+    const L = INNER.left + b.r;
+    const R = INNER.right - b.r;
+    const F = INNER.floor - b.r;
+    if (b.x < L) {
+      b.x = L;
+      if (b.vx < 0) b.vx = bounce ? -b.vx * RESTITUTION : 0;
+    } else if (b.x > R) {
+      b.x = R;
+      if (b.vx > 0) b.vx = bounce ? -b.vx * RESTITUTION : 0;
+    }
+    if (b.y > F) {
+      b.y = F;
+      if (b.vy > 0) b.vy = bounce ? -b.vy * RESTITUTION : 0;
+      if (Math.abs(b.vy) < 18) b.vy = 0;
+      if (bounce) b.vx *= 0.9;
+    }
+  }
+
+  function resolvePair(a, b) {
+    let dx = b.x - a.x;
+    let dy = b.y - a.y;
+    let dist = Math.hypot(dx, dy);
+    const min = a.r + b.r;
+    if (dist === 0) {
+      dx = 0.01;
+      dy = 0;
+      dist = 0.01;
+    }
+    if (dist >= min) return;
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const overlap = min - dist;
+    const invA = 1 / (a.r * a.r);
+    const invB = 1 / (b.r * b.r);
+    const inv = invA + invB;
+    const corr = Math.min(Math.max(overlap - 0.55, 0) * 0.8, 12) / inv;
+    a.x -= nx * corr * invA;
+    a.y -= ny * corr * invA;
+    b.x += nx * corr * invB;
+    b.y += ny * corr * invB;
+    const rvx = b.vx - a.vx;
+    const rvy = b.vy - a.vy;
+    const velN = rvx * nx + rvy * ny;
+    if (velN > 0) return;
+    const e = Math.abs(velN) < 22 ? 0 : RESTITUTION;
+    const j = -(1 + e) * velN / inv;
+    a.vx -= j * nx * invA;
+    a.vy -= j * ny * invA;
+    b.vx += j * nx * invB;
+    b.vy += j * ny * invB;
+    const tx = -ny;
+    const ty = nx;
+    const velT = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
+    let jt = -velT / inv;
+    const maxF = FRICTION * j;
+    if (jt > maxF) jt = maxF;
+    else if (jt < -maxF) jt = -maxF;
+    a.vx -= jt * tx * invA;
+    a.vy -= jt * ty * invA;
+    b.vx += jt * tx * invB;
+    b.vy += jt * ty * invB;
+    const spin = velT * 0.0009;
+    a.spin -= spin;
+    b.spin += spin;
+  }
+
+  function relax(body) {
+    for (let n = 0; n < 16; n++) {
+      for (let i = 0; i < bodies.length; i++) {
+        const other = bodies[i];
+        if (other === body || other.dead) continue;
+        let dx = body.x - other.x;
+        let dy = body.y - other.y;
+        let dist = Math.hypot(dx, dy) || 0.001;
+        const min = body.r + other.r;
+        if (dist >= min) continue;
+        const push = (min - dist) * 0.6;
+        body.x += (dx / dist) * push;
+        body.y += (dy / dist) * push;
+      }
+      const L = INNER.left + body.r;
+      const R = INNER.right - body.r;
+      const F = INNER.floor - body.r;
+      if (body.x < L) body.x = L;
+      if (body.x > R) body.x = R;
+      if (body.y > F) body.y = F;
+      if (body.y < body.r + 6) body.y = body.r + 6;
+    }
+  }
+
+  function burst(x, y, color, count, power) {
+    for (let i = 0; i < count; i++) {
+      const a = rngNext() * Math.PI * 2;
+      const s = 30 + rngNext() * power;
+      particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(a) * s,
+        vy: Math.sin(a) * s - 40,
+        life: 0.38 + rngNext() * 0.18,
+        age: 0,
+        color: color,
+        r: 1.6 + rngNext() * 2.2,
+      });
+    }
+  }
+
+  function fuse(a, b) {
+    a.dead = true;
+    b.dead = true;
+    const tier = a.tier + 1;
+    const ma = a.r * a.r;
+    const mb = b.r * b.r;
+    const cat = makeBody(tier, (a.x * ma + b.x * mb) / (ma + mb), (a.y * ma + b.y * mb) / (ma + mb));
+    cat.vx = ((a.vx * ma + b.vx * mb) / (ma + mb)) * 0.22;
+    cat.vy = ((a.vy * ma + b.vy * mb) / (ma + mb)) * 0.22;
+    cat.arm = 0.12;
+    cat.spin = (rngNext() - 0.5) * 1.5;
+    bodies.push(cat);
+    bodies = bodies.filter(function (body) { return !body.dead; });
+    relax(cat);
+    const now = performance.now();
+    if (now - lastMergeAt < 1200) combo += 1;
+    else combo = 1;
+    lastMergeAt = now;
+    if (combo > maxCombo) maxCombo = combo;
+    const gained = MERGE_POINTS[tier] * combo;
+    mergePoints += gained;
+    merges += 1;
+    const freshTier = tier > maxTier;
+    if (freshTier) maxTier = tier;
+    discover(tier);
+    burst(cat.x, cat.y, TIERS[tier].accent, 8 + tier, 70 + tier * 8);
+    rings.push({ x: cat.x, y: cat.y, r: cat.r * 0.45, age: 0, life: 0.34 });
+    floaters.push({ x: cat.x, y: cat.y - cat.r, text: "+" + gained, age: 0, life: 0.85 });
+    trauma = Math.min(1, trauma + 0.16 + tier * 0.025);
+    if (tier >= 6 && !reduceMotion) freeze = 0.045;
+    audio.merge(tier, combo);
+    if (freshTier && tier >= 4) toast(TIERS[tier].name);
+    if (!testing) {
+      considerBest();
+      hubScore();
+      window.Hub.event("merge", {
+        tier: tier + 1,
+        tierId: TIERS[tier].id,
+        tierName: TIERS[tier].name,
+        combo: combo,
+        points: gained,
+        score: totalScore(),
+        highestTier: tierRank(),
+      });
+    }
+  }
+
+  function mergePass() {
+    if (!allowFuse) return;
+    let best = null;
+    for (let i = 0; i < bodies.length; i++) {
+      const a = bodies[i];
+      if (a.dead || a.arm > 0 || a.tier >= 10) continue;
+      for (let j = i + 1; j < bodies.length; j++) {
+        const b = bodies[j];
+        if (b.dead || b.arm > 0 || b.tier !== a.tier) continue;
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        const touch = a.r + b.r;
+        if (dist <= touch + 1.2) {
+          const overlap = touch - dist;
+          if (!best || overlap > best.overlap) best = { a: a, b: b, overlap: overlap };
+        }
+      }
+    }
+    if (!best) return;
+    allowFuse = false;
+    fuse(best.a, best.b);
+  }
+
+  function physics(dt) {
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i];
+      if (b.dead) continue;
+      b.vy += GRAVITY * dt;
+      const damp = Math.exp(-1.35 * dt);
+      b.vx *= damp;
+      b.vy *= damp;
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.angle += b.spin * dt;
+      b.spin *= Math.exp(-2.4 * dt);
+      b.arm = Math.max(0, b.arm - dt);
+      b.age += dt;
+      wallResponse(b, true);
+      const sp = Math.hypot(b.vx, b.vy);
+      if (sp > 1600) {
+        b.vx = (b.vx / sp) * 1600;
+        b.vy = (b.vy / sp) * 1600;
+      }
+    }
+    for (let k = 0; k < 7; k++) {
+      for (let i = 0; i < bodies.length; i++) {
+        if (bodies[i].dead) continue;
+        for (let j = i + 1; j < bodies.length; j++) {
+          if (bodies[j].dead) continue;
+          resolvePair(bodies[i], bodies[j]);
+        }
+      }
+      for (let i = 0; i < bodies.length; i++) {
+        if (!bodies[i].dead) wallResponse(bodies[i], false);
+      }
+    }
+    mergePass();
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i];
+      if (b.dead) continue;
+      if (b.y >= INNER.floor - b.r - 0.8 && Math.hypot(b.vx, b.vy) < 16) {
+        b.vx = 0;
+        b.vy = 0;
+        b.spin *= 0.4;
+      }
+    }
+  }
+
+  function checkOverflow(dt) {
+    lineHot = false;
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i];
+      if (b.dead || b.age < OVER_AGE) continue;
+      if (b.y - b.r < INNER.line) lineHot = true;
+    }
+    if (lineHot) overTimer += dt;
+    else overTimer = Math.max(0, overTimer - dt * 2.2);
+    if (overTimer > OVER_LIMIT) endGame("overflow");
+  }
+
+  function overlaps(x, y, r) {
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i];
+      if (b.dead) continue;
+      const dx = b.x - x;
+      const dy = b.y - y;
+      const min = b.r + r - 0.5;
+      if (dx * dx + dy * dy < min * min) return true;
+    }
+    return false;
+  }
+
+  function clampAim() {
+    const r = TIERS[current].r;
+    if (aimX < INNER.left + r) aimX = INNER.left + r;
+    if (aimX > INNER.right - r) aimX = INNER.right - r;
+  }
+
+  function canDrop() {
+    if (phase !== "playing" || ended || cooldown > 0) return false;
+    if (!helpEl.hidden || !pauseEl.hidden) return false;
+    return !overlaps(aimX, INNER.drop, TIERS[current].r);
+  }
+
+  function capture() {
+    return {
+      bodies: bodies.map(function (b) { return Object.assign({}, b); }),
+      mergePoints: mergePoints,
+      maxTier: maxTier,
+      combo: combo,
+      maxCombo: maxCombo,
+      merges: merges,
+      overTimer: overTimer,
+      lineHot: lineHot,
+      cooldown: cooldown,
+      rngState: rngState,
+      current: current,
+      next: next,
+      undosLeft: undosLeft,
+      aimX: aimX,
+    };
+  }
+
+  function restore(snap) {
+    bodies = snap.bodies.map(function (b) { return Object.assign({}, b); });
+    particles = [];
+    floaters = [];
+    rings = [];
+    mergePoints = snap.mergePoints;
+    maxTier = snap.maxTier;
+    combo = snap.combo;
+    maxCombo = snap.maxCombo;
+    merges = snap.merges;
+    overTimer = snap.overTimer;
+    lineHot = !!snap.lineHot;
+    cooldown = snap.cooldown;
+    rngState = snap.rngState;
+    current = snap.current;
+    next = snap.next;
+    undosLeft = snap.undosLeft;
+    aimX = snap.aimX;
+    ended = false;
+    freeze = 0;
+    trauma = 0;
+  }
+
+  function pushHistory() {
+    history.push(capture());
+    if (history.length > 16) history.shift();
+  }
+
+  function tryDrop() {
+    if (!canDrop()) {
+      reject = 0.16;
+      audio.tick();
+      return;
+    }
+    pushHistory();
+    const tier = current;
+    const cat = makeBody(tier, aimX, INNER.drop);
+    cat.vy = 70;
+    cat.spin = (rngNext() - 0.5) * 1.2;
+    bodies.push(cat);
+    discover(tier);
+    if (tier > maxTier) maxTier = tier;
+    cooldown = 0.42;
+    current = next;
+    next = rollTier();
+    audio.drop();
+    considerBest();
+    syncPreviews();
+    if (!testing) {
+      window.Hub.event("drop", {
+        tier: tier + 1,
+        tierId: TIERS[tier].id,
+        tierName: TIERS[tier].name,
+        score: totalScore(),
+        highestTier: tierRank(),
+      });
+      hubScore();
+    }
+  }
+
+  function undo() {
+    if (undosLeft <= 0 || history.length === 0) return;
+    if (phase !== "playing" && phase !== "over" && phase !== "paused") return;
+    const snap = history.pop();
+    restore(snap);
+    undosLeft -= 1;
+    phase = "playing";
+    resultEl.hidden = true;
+    pauseEl.hidden = true;
+    syncPreviews();
+    syncHud();
+    audio.tick();
+    if (!testing) {
+      window.Hub.event("undo", { undosLeft: undosLeft, score: totalScore(), highestTier: tierRank() });
+      hubScore();
+    }
+  }
+
+  function endGame(reason) {
+    if (ended || testing) return;
+    ended = true;
+    phase = "over";
+    considerBest();
+    const payload = scorePayload({
+      reason: reason,
+      durationMs: Math.round(performance.now() - runStarted),
+      undosUsed: undosStart - undosLeft,
+    });
+    window.Hub.score(payload);
+    window.Hub.gameOver(payload);
+    audio.over();
+    showResult(payload);
+    announce("Run over. Score " + payload.score + ". Highest cat " + (payload.highestTierName || "none") + ".");
+  }
+
+  function showResult(payload) {
+    bind("result-score", String(payload.score));
+    bind("result-tier", payload.highestTierName || "—");
+    bind("result-merges", String(payload.merges));
+    bind("result-combo", String(payload.maxCombo));
+    bind("result-mode", payload.mode === "daily" ? "Daily · " + formatSeed(payload.seed) : "Free play");
+    document.getElementById("result-best").hidden = !celebratedBest;
+    const undoBtn = document.getElementById("result-undo");
+    undoBtn.hidden = undosLeft <= 0 || history.length === 0;
+    undoBtn.textContent = "Undo last drop · " + undosLeft;
+    paintPortrait(document.getElementById("result-cat"), maxTier);
+    resultEl.hidden = false;
+    syncChrome();
+  }
+
+  function startGame(nextMode) {
+    mode = nextMode === "daily" ? "daily" : "free";
+    session += 1;
+    if (mode === "daily") {
+      dailySeed = utcSeed();
+      rngState = hashString("rokumon-cats-v1:" + dailySeed) || 1;
+      undosLeft = 1;
+    } else {
+      dailySeed = null;
+      rngState = (Math.floor(Math.random() * 0xffffffff) ^ hashString(String(Date.now()))) >>> 0;
+      if (!rngState) rngState = 1;
+      undosLeft = 3;
+    }
+    undosStart = undosLeft;
+    bodies = [];
+    particles = [];
+    floaters = [];
+    rings = [];
+    history = [];
+    mergePoints = 0;
+    maxTier = -1;
+    combo = 0;
+    maxCombo = 0;
+    merges = 0;
+    lastMergeAt = 0;
+    overTimer = 0;
+    lineHot = false;
+    cooldown = 0;
+    freeze = 0;
+    reject = 0;
+    ended = false;
+    testing = false;
+    celebratedBest = false;
+    trauma = 0;
+    aimX = (INNER.left + INNER.right) / 2;
+    current = rollTier();
+    next = rollTier();
+    runStarted = performance.now();
+    phase = "playing";
+    titleEl.hidden = true;
+    helpEl.hidden = true;
+    pauseEl.hidden = true;
+    resultEl.hidden = true;
+    dock.hidden = false;
+    mobileStats.hidden = false;
+    lastTs = 0;
+    acc = 0;
+    syncPreviews();
+    syncHud();
+    syncChrome();
+    audio.unlock();
+    window.Hub.event("start", { mode: mode, seed: dailySeed, session: session });
+    hubScore();
+    if (!save.seenHelp) openHelp();
+  }
+
+  function leaveToTitle() {
+    phase = "title";
+    ended = false;
+    bodies = [];
+    particles = [];
+    floaters = [];
+    rings = [];
+    titleEl.hidden = false;
+    helpEl.hidden = true;
+    pauseEl.hidden = true;
+    resultEl.hidden = true;
+    dock.hidden = true;
+    mobileStats.hidden = true;
+    refreshTitle();
+    syncChrome();
+  }
+
+  function openHelp() {
+    helpEl.hidden = false;
+    requestAnimationFrame(paintTierStrip);
+  }
+
+  function closeHelp() {
+    helpEl.hidden = true;
+    if (!save.seenHelp) {
+      save.seenHelp = true;
+      persist();
+    }
+    lastTs = 0;
+  }
+
+  function openPause() {
+    if (phase !== "playing") return;
+    phase = "paused";
+    pauseEl.hidden = false;
+  }
+
+  function closePause() {
+    if (phase !== "paused") return;
+    phase = "playing";
+    pauseEl.hidden = true;
+    lastTs = 0;
+  }
+
+  function toggleSound() {
+    audio.unlock();
+    save.sound = !save.sound;
+    persist();
+    audio.setMuted(!save.sound);
+    syncSound();
+  }
+
+  function syncSound() {
+    const btn = document.getElementById("sound");
+    btn.setAttribute("aria-pressed", save.sound ? "true" : "false");
+    btn.setAttribute("aria-label", save.sound ? "Mute sound" : "Unmute sound");
+    btn.innerHTML = save.sound ? ICON_SOUND : ICON_MUTE;
+  }
+
+  function syncChrome() {
+    document.getElementById("pause-btn").hidden = phase !== "playing" && phase !== "paused";
+  }
+
+  function syncPreviews() {
+    paintPreview(document.getElementById("now-cat"), current);
+    paintPreview(document.getElementById("next-cat"), next);
+    bind("now-name", TIERS[current].name);
+    bind("next-name", TIERS[next].name);
+  }
+
+  function syncPips() {
+    const host = document.getElementById("pips");
+    if (host.childElementCount !== TIERS.length) {
+      host.replaceChildren.apply(host, TIERS.map(function (_, i) {
+        const dot = document.createElement("span");
+        dot.dataset.pip = String(i);
+        return dot;
+      }));
+    }
+    for (let i = 0; i < host.children.length; i++) {
+      host.children[i].classList.toggle("on", i <= maxTier);
+    }
+  }
+
+  function syncHud() {
+    const score = totalScore();
+    bind("score", String(score));
+    let best = save.bestScore;
+    if (mode === "daily" && dailySeed && save.daily.seed === dailySeed) best = Math.max(best, save.daily.score);
+    bind("best", String(Math.max(best, score)));
+    const rank = tierRank();
+    bind("highest", rank > 0 ? TIERS[rank - 1].name : "—");
+    bind("mode", mode === "daily" ? "Daily · " + formatSeed(dailySeed) : "Free play");
+    const undoBtn = document.getElementById("undo");
+    undoBtn.textContent = "Undo · " + undosLeft;
+    undoBtn.disabled = undosLeft <= 0 || history.length === 0;
+    const showCombo = combo >= 2 && performance.now() - lastMergeAt < 900 && phase === "playing";
+    comboEl.hidden = !showCombo;
+    if (showCombo) comboEl.textContent = "Chain ×" + combo;
+    syncPips();
+  }
+
+  function refreshTitle() {
+    const today = utcSeed();
+    const dailyBest = save.daily.seed === today ? save.daily.score : 0;
+    bind("daily-best", dailyBest > 0 ? "Today " + dailyBest : "Same drops for everyone, UTC");
+    bind("best-score", String(save.bestScore));
+    bind("best-cat", save.bestTier > 0 ? TIERS[save.bestTier - 1].name : "None yet");
+    bind("collection", "Collection " + save.seen.length + "/11");
+  }
+
+  function buildTierList() {
+    const ol = document.getElementById("tier-list");
+    ol.replaceChildren.apply(ol, TIERS.map(function (t, i) {
+      const li = document.createElement("li");
+      const sw = document.createElement("span");
+      sw.className = "swatch";
+      sw.style.background = t.body;
+      const label = document.createElement("span");
+      label.textContent = (i + 1) + " " + t.name;
+      li.append(sw, label);
+      return li;
+    }));
+  }
+
+  function resize() {
+    const rect = stage.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cssW = Math.max(1, rect.width);
+    cssH = Math.max(1, rect.height);
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    const scale = Math.min(cssW / VIEW_W, cssH / VIEW_H);
+    view = {
+      dpr: dpr,
+      scale: scale,
+      ox: (cssW - VIEW_W * scale) / 2,
+      oy: (cssH - VIEW_H * scale) / 2,
+    };
+  }
+
+  function eventToBowl(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * cssW;
+    const y = ((e.clientY - rect.top) / rect.height) * cssH;
+    return { x: (x - view.ox) / view.scale, y: (y - view.oy) / view.scale };
+  }
+
+  function updateFx(dt) {
+    shakeClock += dt;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.age += dt;
+      p.vy += 520 * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      if (p.age >= p.life) particles.splice(i, 1);
+    }
+    for (let i = floaters.length - 1; i >= 0; i--) {
+      const f = floaters[i];
+      f.age += dt;
+      f.y -= 28 * dt;
+      if (f.age >= f.life) floaters.splice(i, 1);
+    }
+    for (let i = rings.length - 1; i >= 0; i--) {
+      rings[i].age += dt;
+      if (rings[i].age >= rings[i].life) rings.splice(i, 1);
+    }
+    if (toastTimer > 0) {
+      toastTimer -= dt;
+      if (toastTimer <= 0) toastEl.hidden = true;
+    }
+  }
+
+  function frame(ts) {
+    requestAnimationFrame(frame);
+    if (!lastTs) lastTs = ts;
+    const dt = Math.min(0.05, (ts - lastTs) / 1000);
+    lastTs = ts;
+    if (document.hidden) {
+      lastTs = 0;
+      return;
+    }
+    const simulating = phase === "playing" && helpEl.hidden;
+    if (simulating && freeze <= 0) {
+      let aimDir = 0;
+      if (keys.has("ArrowLeft") || keys.has("KeyA")) aimDir -= 1;
+      if (keys.has("ArrowRight") || keys.has("KeyD")) aimDir += 1;
+      if (aimDir) {
+        aimX += aimDir * 340 * dt;
+        clampAim();
+      }
+      cooldown = Math.max(0, cooldown - dt);
+      reject = Math.max(0, reject - dt);
+      acc += dt;
+      allowFuse = true;
+      let steps = 0;
+      while (acc >= STEP && steps < 8) {
+        physics(STEP);
+        acc -= STEP;
+        steps += 1;
+      }
+      checkOverflow(dt);
+    } else {
+      if (freeze > 0) freeze = Math.max(0, freeze - dt);
+      acc = 0;
+    }
+    updateFx(dt);
+    if (trauma > 0) trauma = Math.max(0, trauma - dt * 1.65);
+    render();
+    if (phase !== "title") syncHud();
+  }
+
+  function render() {
+    ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+    ctx.clearRect(0, 0, cssW, cssH);
+    const mag = reduceMotion ? 0 : trauma * trauma;
+    const shakeX = mag * (Math.sin(shakeClock * 47) + Math.sin(shakeClock * 29)) * 3.5;
+    const shakeY = mag * (Math.cos(shakeClock * 41) + Math.sin(shakeClock * 23)) * 2.4;
+    ctx.save();
+    ctx.translate(view.ox + shakeX, view.oy + shakeY);
+    ctx.scale(view.scale, view.scale);
+    drawBowl(ctx);
+    if (phase === "title") drawDecor(ctx);
+    else {
+      drawBodies(ctx);
+      drawRings(ctx);
+      drawParticles(ctx);
+      drawFloaters(ctx);
+      if (phase === "playing" && helpEl.hidden) {
+        drawGuide(ctx);
+        drawGhost(ctx);
+      }
+    }
+    ctx.restore();
+  }
+
+  function drawBowl(c) {
+    c.save();
+    c.fillStyle = "rgba(28, 25, 22, 0.08)";
+    roundRect(c, BOWL.x + 5, BOWL.y + 10, BOWL.w, BOWL.h, BOWL.radius);
+    c.fill();
+    c.fillStyle = "#2c2622";
+    roundRect(c, BOWL.x, BOWL.y, BOWL.w, BOWL.h, BOWL.radius);
+    c.fill();
+    c.strokeStyle = "rgba(255,255,255,0.06)";
+    c.lineWidth = 2;
+    c.stroke();
+    c.fillStyle = "rgba(255,255,255,0.03)";
+    c.beginPath();
+    c.ellipse((INNER.left + INNER.right) / 2, INNER.floor - 6, (INNER.right - INNER.left) * 0.4, 9, 0, 0, Math.PI * 2);
+    c.fill();
+    const heat = lineHot ? Math.min(1, overTimer / OVER_LIMIT) : 0;
+    c.setLineDash([6, 7]);
+    c.lineWidth = 1.5;
+    c.strokeStyle = heat > 0 ? "rgba(196, 122, 112, " + (0.45 + heat * 0.5) + ")" : "rgba(243, 236, 226, 0.28)";
+    c.beginPath();
+    c.moveTo(INNER.left + 6, INNER.line);
+    c.lineTo(INNER.right - 6, INNER.line);
+    c.stroke();
+    c.setLineDash([]);
+    c.font = "600 11px Segoe UI, system-ui, sans-serif";
+    c.textAlign = "right";
+    c.fillStyle = heat > 0 ? "rgba(236, 214, 208, 0.92)" : "rgba(243, 236, 226, 0.4)";
+    c.fillText(heat > 0.15 ? "Overflow" : "Limit", INNER.right - 8, INNER.line - 8);
+    c.restore();
+  }
+
+  function drawDecor(c) {
+    const tiers = [0, 2, 1, 4, 3];
+    const gap = 12;
+    let total = 0;
+    for (let i = 0; i < tiers.length; i++) total += TIERS[tiers[i]].r * 2;
+    total += gap * (tiers.length - 1);
+    let x = (VIEW_W - total) / 2;
+    for (let i = 0; i < tiers.length; i++) {
+      const r = TIERS[tiers[i]].r;
+      x += r;
+      drawCat(c, x, INNER.floor - r - 1, r, tiers[i], 0, 1);
+      x += r + gap;
+    }
+  }
+
+  function drawBodies(c) {
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i];
+      if (b.dead) continue;
+      const t = Math.min(1, b.age / 0.2);
+      const pop = reduceMotion ? 1 : 0.8 + 0.2 * easeOutBack(t);
+      drawCat(c, b.x, b.y, b.r, b.tier, b.angle, pop);
+    }
+  }
+
+  function drawGuide(c) {
+    c.save();
+    c.setLineDash([3, 8]);
+    c.strokeStyle = "rgba(246, 243, 238, 0.2)";
+    c.lineWidth = 1.25;
+    c.beginPath();
+    c.moveTo(aimX, INNER.drop + TIERS[current].r + 4);
+    c.lineTo(aimX, INNER.floor - 8);
+    c.stroke();
+    c.restore();
+  }
+
+  function drawGhost(c) {
+    const ready = canDrop();
+    c.save();
+    c.globalAlpha = ready ? 0.95 : 0.38;
+    drawCat(c, aimX, INNER.drop, TIERS[current].r, current, 0, 1, { ghost: true });
+    if (!ready && (reject > 0 || overlaps(aimX, INNER.drop, TIERS[current].r))) {
+      c.globalAlpha = 0.85;
+      c.strokeStyle = "#e7b1a8";
+      c.lineWidth = 2;
+      c.beginPath();
+      c.arc(aimX, INNER.drop, TIERS[current].r + 5, 0, Math.PI * 2);
+      c.stroke();
+    }
+    c.restore();
+  }
+
+  function drawRings(c) {
+    for (let i = 0; i < rings.length; i++) {
+      const ring = rings[i];
+      const t = ring.age / ring.life;
+      c.save();
+      c.globalAlpha = 1 - t;
+      c.strokeStyle = "rgba(247, 241, 230, 0.85)";
+      c.lineWidth = 2;
+      c.beginPath();
+      c.arc(ring.x, ring.y, ring.r + t * 36, 0, Math.PI * 2);
+      c.stroke();
+      c.restore();
+    }
+  }
+
+  function drawParticles(c) {
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      c.save();
+      c.globalAlpha = Math.max(0, 1 - p.age / p.life);
+      c.fillStyle = p.color;
+      c.beginPath();
+      c.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      c.fill();
+      c.restore();
+    }
+  }
+
+  function drawFloaters(c) {
+    c.save();
+    c.font = "600 18px Segoe UI, system-ui, sans-serif";
+    c.textAlign = "center";
+    c.fillStyle = "#f6f3ee";
+    for (let i = 0; i < floaters.length; i++) {
+      const f = floaters[i];
+      c.globalAlpha = Math.max(0, 1 - f.age / f.life);
+      c.fillText(f.text, f.x, f.y);
+    }
+    c.restore();
+  }
+
+  function paintPreview(target, tier) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const size = 72;
+    target.width = size * dpr;
+    target.height = size * dpr;
+    const c = target.getContext("2d");
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, size, size);
+    drawCat(c, size / 2, size / 2 + 4, 22, tier, 0, 1);
+  }
+
+  function paintPortrait(target, tier) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const size = 140;
+    target.width = size * dpr;
+    target.height = size * dpr;
+    const c = target.getContext("2d");
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, size, size);
+    if (tier < 0) return;
+    drawCat(c, size / 2, size / 2 + 8, 46, tier, 0, 1);
+  }
+
+  function paintTierStrip() {
+    const target = document.getElementById("tier-strip");
+    const w = Math.max(280, target.clientWidth || 360);
+    const h = 84;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    target.width = Math.round(w * dpr);
+    target.height = Math.round(h * dpr);
+    const c = target.getContext("2d");
+    c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    c.clearRect(0, 0, w, h);
+    const slot = w / TIERS.length;
+    for (let i = 0; i < TIERS.length; i++) {
+      const r = Math.min(15, slot * 0.34);
+      drawCat(c, slot * i + slot / 2, 40, r, i, 0, 1);
+      c.fillStyle = "#6e685f";
+      c.font = "600 10px Segoe UI, system-ui, sans-serif";
+      c.textAlign = "center";
+      c.fillText(String(i + 1), slot * i + slot / 2, 78);
+    }
+  }
+
+  function mix(hex, target, t) {
+    const n = parseInt(hex.slice(1), 16);
+    const m = parseInt(target.slice(1), 16);
+    const ch = function (shift) {
+      const a = (n >> shift) & 255;
+      const b = (m >> shift) & 255;
+      return Math.round(a + (b - a) * t);
+    };
+    return "rgb(" + ch(16) + ", " + ch(8) + ", " + ch(0) + ")";
+  }
+
+  function roundRect(c, x, y, w, h, r) {
+    const rr = Math.min(r, w / 2, h / 2);
+    c.beginPath();
+    c.moveTo(x + rr, y);
+    c.arcTo(x + w, y, x + w, y + h, rr);
+    c.arcTo(x + w, y + h, x, y + h, rr);
+    c.arcTo(x, y + h, x, y, rr);
+    c.arcTo(x, y, x + w, y, rr);
+    c.closePath();
+  }
+
+  function easeOutBack(t) {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
+
+  function drawCat(c, x, y, r, tier, angle, pop, opts) {
+    const t = TIERS[tier];
+    const ghost = opts && opts.ghost;
+    c.save();
+    c.translate(x, y);
+    c.scale(pop, pop);
+    if (!ghost) {
+      c.fillStyle = "rgba(0,0,0,0.16)";
+      c.beginPath();
+      c.ellipse(0, r * 0.9, r * 0.58, r * 0.12, 0, 0, Math.PI * 2);
+      c.fill();
+    }
+    if (tier === 10) {
+      c.beginPath();
+      c.arc(0, 0, r * 1.18, 0, Math.PI * 2);
+      c.strokeStyle = "rgba(247, 241, 230, 0.75)";
+      c.lineWidth = Math.max(1.4, r * 0.045);
+      c.stroke();
+    }
+    c.rotate(angle || 0);
+    if (tier >= 2) {
+      c.fillStyle = mix(t.body, "#000000", 0.12);
+      c.beginPath();
+      c.arc(-r * 0.72, r * 0.52, r * 0.14, 0, Math.PI * 2);
+      c.fill();
+    }
+    ear(c, -r * 0.46, -r * 0.58, -0.32, r, t.ear, tier === 10 ? "#8d3a32" : mix(t.ear, "#ffffff", 0.45));
+    ear(c, r * 0.46, -r * 0.58, 0.32, r, t.ear, tier === 10 ? "#8d3a32" : mix(t.ear, "#ffffff", 0.45));
+    const g = c.createRadialGradient(-r * 0.28, -r * 0.34, r * 0.08, 0, r * 0.08, r * 1.05);
+    g.addColorStop(0, mix(t.body, "#ffffff", 0.45));
+    g.addColorStop(0.58, t.body);
+    g.addColorStop(1, mix(t.body, "#000000", 0.16));
+    c.beginPath();
+    c.arc(0, 0, r, 0, Math.PI * 2);
+    c.fillStyle = g;
+    c.fill();
+    c.beginPath();
+    c.ellipse(-r * 0.26, -r * 0.34, r * 0.24, r * 0.14, -0.6, 0, Math.PI * 2);
+    c.fillStyle = "rgba(255,255,255,0.4)";
+    c.fill();
+    c.globalAlpha = 0.5;
+    c.fillStyle = t.blush;
+    c.beginPath();
+    c.ellipse(-r * 0.42, r * 0.22, r * 0.15, r * 0.09, 0, 0, Math.PI * 2);
+    c.ellipse(r * 0.42, r * 0.22, r * 0.15, r * 0.09, 0, 0, Math.PI * 2);
+    c.fill();
+    c.globalAlpha = 1;
+    drawFace(c, r, tier, t);
+    drawAccessory(c, r, tier, t);
+    c.restore();
+  }
+
+  function ear(c, x, y, rot, r, outer, inner) {
+    c.save();
+    c.translate(x, y);
+    c.rotate(rot);
+    c.beginPath();
+    c.moveTo(0, -r * 0.56);
+    c.lineTo(r * 0.26, r * 0.08);
+    c.lineTo(-r * 0.26, r * 0.08);
+    c.closePath();
+    c.fillStyle = outer;
+    c.fill();
+    c.beginPath();
+    c.moveTo(0, -r * 0.3);
+    c.lineTo(r * 0.12, r * 0.02);
+    c.lineTo(-r * 0.12, r * 0.02);
+    c.closePath();
+    c.fillStyle = inner;
+    c.fill();
+    c.restore();
+  }
+
+  function drawFace(c, r, tier, t) {
+    const eyeY = -r * 0.02;
+    const eyeX = r * 0.28;
+    c.lineCap = "round";
+    c.strokeStyle = t.ink;
+    c.fillStyle = t.ink;
+    c.lineWidth = Math.max(1.2, r * 0.055);
+    if (tier === 0) {
+      dashEye(c, -eyeX, eyeY, r);
+      dashEye(c, eyeX, eyeY, r);
+    } else if (tier >= 8) {
+      happyEye(c, -eyeX, eyeY, r);
+      happyEye(c, eyeX, eyeY, r);
+    } else if (tier >= 5) {
+      ovalEye(c, -eyeX, eyeY, r);
+      ovalEye(c, eyeX, eyeY, r);
+    } else {
+      dotEye(c, -eyeX, eyeY, r);
+      dotEye(c, eyeX, eyeY, r);
+    }
+    if (tier === 3) {
+      c.strokeStyle = mix(t.ink, t.body, 0.25);
+      c.lineWidth = Math.max(1, r * 0.04);
+      c.beginPath();
+      c.moveTo(-r * 0.08, -r * 0.42);
+      c.lineTo(-r * 0.16, -r * 0.26);
+      c.moveTo(r * 0.08, -r * 0.44);
+      c.lineTo(0, -r * 0.26);
+      c.stroke();
+    }
+    if (tier === 9) spark(c, 0, -r * 0.5, r * 0.11, mix(t.accent, "#ffffff", 0.25));
+    if (tier === 10) {
+      c.beginPath();
+      c.strokeStyle = t.accent;
+      c.lineWidth = Math.max(1.2, r * 0.04);
+      c.arc(0, -r * 0.48, r * 0.1, 0.6, Math.PI - 0.6);
+      c.stroke();
+    }
+    c.fillStyle = t.accent;
+    c.beginPath();
+    c.moveTo(0, r * 0.15);
+    c.lineTo(r * 0.055, r * 0.23);
+    c.lineTo(-r * 0.055, r * 0.23);
+    c.closePath();
+    c.fill();
+    if (tier > 0) {
+      c.strokeStyle = t.ink;
+      c.lineWidth = Math.max(1, r * 0.04);
+      c.beginPath();
+      c.moveTo(0, r * 0.23);
+      c.quadraticCurveTo(-r * 0.1, r * 0.36, -r * 0.18, r * 0.28);
+      c.moveTo(0, r * 0.23);
+      c.quadraticCurveTo(r * 0.1, r * 0.36, r * 0.18, r * 0.28);
+      c.stroke();
+    }
+    if (tier >= 2) {
+      c.strokeStyle = mix(t.ink, "#ffffff", 0.2);
+      c.globalAlpha = 0.7;
+      c.lineWidth = Math.max(1, r * 0.028);
+      for (let side = -1; side <= 1; side += 2) {
+        for (let i = -1; i <= 1; i++) {
+          c.beginPath();
+          c.moveTo(side * r * 0.16, r * 0.2);
+          c.lineTo(side * r * 0.9, r * 0.16 + i * r * 0.13);
+          c.stroke();
+        }
+      }
+      c.globalAlpha = 1;
+    }
+  }
+
+  function dashEye(c, x, y, r) {
+    c.beginPath();
+    c.moveTo(x - r * 0.1, y);
+    c.quadraticCurveTo(x, y + r * 0.06, x + r * 0.1, y);
+    c.stroke();
+  }
+  function dotEye(c, x, y, r) {
+    c.beginPath();
+    c.arc(x, y, Math.max(1.15, r * 0.072), 0, Math.PI * 2);
+    c.fill();
+    c.save();
+    c.fillStyle = "rgba(255,255,255,0.88)";
+    c.beginPath();
+    c.arc(x - r * 0.02, y - r * 0.022, Math.max(0.55, r * 0.024), 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+  function ovalEye(c, x, y, r) {
+    c.beginPath();
+    c.ellipse(x, y, r * 0.085, r * 0.105, 0, 0, Math.PI * 2);
+    c.fill();
+    c.save();
+    c.fillStyle = "rgba(255,255,255,0.85)";
+    c.beginPath();
+    c.arc(x - r * 0.028, y - r * 0.03, r * 0.028, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+  function happyEye(c, x, y, r) {
+    c.beginPath();
+    c.arc(x, y + r * 0.02, r * 0.11, Math.PI * 1.15, Math.PI * 1.85);
+    c.stroke();
+  }
+  function spark(c, x, y, s, color) {
+    c.save();
+    c.translate(x, y);
+    c.strokeStyle = color;
+    c.lineWidth = Math.max(1, s * 0.18);
+    c.beginPath();
+    c.moveTo(0, -s);
+    c.lineTo(0, s);
+    c.moveTo(-s, 0);
+    c.lineTo(s, 0);
+    c.stroke();
+    c.restore();
+  }
+  function bow(c, x, y, s, color) {
+    c.save();
+    c.translate(x, y);
+    c.fillStyle = color;
+    c.beginPath();
+    c.ellipse(-s * 0.72, 0, s, s * 0.58, -0.45, 0, Math.PI * 2);
+    c.ellipse(s * 0.72, 0, s, s * 0.58, 0.45, 0, Math.PI * 2);
+    c.fill();
+    c.beginPath();
+    c.arc(0, 0, s * 0.34, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
+  }
+  function drawAccessory(c, r, tier, t) {
+    if (tier === 4 || tier === 5 || tier === 6) {
+      c.beginPath();
+      c.strokeStyle = t.accent;
+      c.lineWidth = Math.max(1.4, r * 0.05);
+      c.arc(0, r * 0.05, r * 0.5, 0.5, Math.PI - 0.5);
+      c.stroke();
+    }
+    if (tier === 5 || tier === 6) {
+      c.beginPath();
+      c.fillStyle = mix(t.accent, "#ffffff", 0.35);
+      c.arc(0, r * 0.46, r * 0.1, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = t.ink;
+      c.beginPath();
+      c.arc(0, r * 0.48, Math.max(0.8, r * 0.03), 0, Math.PI * 2);
+      c.fill();
+    }
+    if (tier === 7) bow(c, r * 0.52, -r * 0.7, r * 0.15, t.accent);
+    if (tier === 8) {
+      c.fillStyle = t.accent;
+      roundRect(c, -r * 0.7, r * 0.36, r * 1.4, r * 0.18, r * 0.08);
+      c.fill();
+      roundRect(c, r * 0.26, r * 0.4, r * 0.14, r * 0.38, r * 0.05);
+      c.fill();
+    }
+  }
+
+  function selfTest(opts) {
+    testing = true;
+    const report = { merge: false, floor: false, wall: false };
+    bodies = [];
+    bodies.push(makeBody(0, 200, 400), makeBody(0, 228, 400));
+    for (let i = 0; i < 24; i++) {
+      allowFuse = true;
+      physics(1 / 60);
+    }
+    const live = bodies.filter(function (b) { return !b.dead; });
+    report.merge = live.length === 1 && live[0].tier === 1;
+    report.mergeCount = live.length;
+    report.mergeTiers = live.map(function (b) { return b.tier; });
+    bodies = [];
+    const cat = makeBody(4, (INNER.left + INNER.right) / 2, INNER.drop);
+    cat.arm = 99;
+    bodies.push(cat);
+    for (let i = 0; i < 420; i++) {
+      allowFuse = false;
+      physics(1 / 60);
+    }
+    const floorY = INNER.floor - cat.r;
+    report.floor = Math.abs(cat.y - floorY) < 3 && Math.abs(cat.vy) < 25;
+    report.y = Math.round(cat.y * 10) / 10;
+    report.vy = Math.round(cat.vy * 10) / 10;
+    report.floorY = floorY;
+    cat.x = INNER.left - 30;
+    cat.vx = -500;
+    physics(1 / 60);
+    report.wall = cat.x >= INNER.left + cat.r - 0.8;
+    report.x = Math.round(cat.x * 10) / 10;
+    const left0 = aimX;
+    aimX = (INNER.left + INNER.right) / 2;
+    const before = aimX;
+    aimX -= 40;
+    report.aimLeft = aimX < before;
+    aimX = left0;
+
+    testing = false;
+    ended = false;
+    phase = "playing";
+    mode = "free";
+    helpEl.hidden = true;
+    pauseEl.hidden = true;
+    resultEl.hidden = true;
+    titleEl.hidden = true;
+    bodies = [makeBody(1, (INNER.left + INNER.right) / 2, INNER.line - 2)];
+    bodies[0].age = 3;
+    maxTier = 1;
+    mergePoints = 24;
+    merges = 3;
+    maxCombo = 2;
+    overTimer = 0;
+    lineHot = false;
+    for (let i = 0; i < 90; i++) checkOverflow(1 / 60);
+    report.overflow = phase === "over" && ended === true;
+
+    report.ok = !!(report.merge && report.floor && report.wall && report.aimLeft && report.overflow);
+    if (opts && opts.keepResult) return report;
+
+    resultEl.hidden = true;
+    ended = false;
+    phase = "title";
+    titleEl.hidden = false;
+    bodies = [];
+    particles = [];
+    floaters = [];
+    rings = [];
+    testing = false;
+    return report;
+  }
+
+  document.getElementById("help-btn").innerHTML = ICON_HELP;
+  document.getElementById("pause-btn").innerHTML = ICON_PAUSE;
+  syncSound();
+  buildTierList();
+  refreshTitle();
+  installHub();
+  resize();
+  new ResizeObserver(resize).observe(stage);
+  window.addEventListener("resize", resize);
+
+  document.getElementById("play-free").addEventListener("click", function () { startGame("free"); });
+  document.getElementById("play-daily").addEventListener("click", function () { startGame("daily"); });
+  document.getElementById("open-help").addEventListener("click", openHelp);
+  document.getElementById("help-btn").addEventListener("click", openHelp);
+  document.getElementById("help-close").addEventListener("click", closeHelp);
+  document.getElementById("sound").addEventListener("click", toggleSound);
+  document.getElementById("undo").addEventListener("click", undo);
+  document.getElementById("pause-btn").addEventListener("click", openPause);
+  document.getElementById("pause-resume").addEventListener("click", closePause);
+  document.getElementById("pause-help").addEventListener("click", function () { closePause(); openHelp(); });
+  document.getElementById("pause-leave").addEventListener("click", leaveToTitle);
+  document.getElementById("result-again").addEventListener("click", function () { startGame(mode); });
+  document.getElementById("result-title").addEventListener("click", leaveToTitle);
+  document.getElementById("result-undo").addEventListener("click", undo);
+  helpEl.addEventListener("click", function (e) { if (e.target === helpEl) closeHelp(); });
+  pauseEl.addEventListener("click", function (e) { if (e.target === pauseEl) closePause(); });
+
+  window.addEventListener("pointerdown", function () { audio.unlock(); });
+  window.addEventListener("keydown", function (e) {
+    audio.unlock();
+    if (e.repeat && (e.code === "Space" || e.code === "Enter" || e.code === "ArrowDown")) return;
+    keys.add(e.code);
+    if (e.code === "Escape") {
+      e.preventDefault();
+      if (!helpEl.hidden) closeHelp();
+      else if (!pauseEl.hidden) closePause();
+      else if (phase === "playing") openPause();
+      return;
+    }
+    if (e.target instanceof HTMLButtonElement && (e.code === "Space" || e.code === "Enter")) return;
+    if (e.code === "ArrowLeft" || e.code === "ArrowRight" || e.code === "ArrowDown" || e.code === "Space") e.preventDefault();
+    if ((e.code === "Space" || e.code === "Enter" || e.code === "ArrowDown") && phase === "playing" && helpEl.hidden && pauseEl.hidden) {
+      tryDrop();
+    }
+    if (e.code === "KeyU") undo();
+    if (e.code === "KeyM") toggleSound();
+  });
+  window.addEventListener("keyup", function (e) { keys.delete(e.code); });
+  window.addEventListener("blur", function () { keys.clear(); });
+  document.addEventListener("visibilitychange", function () {
+    lastTs = 0;
+    if (!document.hidden && audio.ctx && audio.ctx.state === "suspended") audio.ctx.resume();
+  });
+
+  canvas.addEventListener("pointerdown", function (e) {
+    if (phase !== "playing" || !helpEl.hidden || !pauseEl.hidden) return;
+    pointerId = e.pointerId;
+    canvas.setPointerCapture(e.pointerId);
+    aimX = eventToBowl(e).x;
+    clampAim();
+  });
+  canvas.addEventListener("pointermove", function (e) {
+    if (phase !== "playing") return;
+    if (e.pointerType === "mouse" || e.pointerId === pointerId) {
+      aimX = eventToBowl(e).x;
+      clampAim();
+    }
+  });
+  canvas.addEventListener("pointerup", function (e) {
+    if (pointerId !== e.pointerId) return;
+    pointerId = null;
+    if (phase !== "playing" || !helpEl.hidden || !pauseEl.hidden) return;
+    aimX = eventToBowl(e).x;
+    clampAim();
+    tryDrop();
+  });
+  canvas.addEventListener("pointercancel", function () { pointerId = null; });
+  canvas.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+
+  window.__rokumon = {
+    start: startGame,
+    undo: undo,
+    state: function () {
+      return {
+        phase: phase,
+        score: totalScore(),
+        cats: bodies.length,
+        maxTier: maxTier,
+        mode: mode,
+        aimX: aimX,
+        cooldown: cooldown,
+        merges: merges,
+        tierRank: tierRank(),
+        seed: dailySeed,
+      };
+    },
+    selfTest: selfTest,
+    setKeys: function (codes) {
+      keys.clear();
+      (codes || []).forEach(function (code) { keys.add(code); });
+    },
+    getAim: function () { return aimX; },
+  };
+  window.__controlsTest = {
+    getAim: function () { return aimX; },
+    setKeys: function (codes) { window.__rokumon.setKeys(codes); },
+  };
+
+  window.Hub.ready({
+    id: "rokumon-cats",
+    title: "Rokumon Cats",
+    version: VERSION,
+    modes: ["free", "daily"],
+  });
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

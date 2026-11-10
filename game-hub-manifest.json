@@ -1,0 +1,51 @@
+{
+  "id": "rokumon-cats",
+  "slug": "rokumon-cats",
+  "title": "Rokumon Cats",
+  "version": "1.0.0",
+  "description": "Drop chibi cats into the bowl. Matching cats merge into the next tier, up to the moon cat Rokumon.",
+  "author": "SarutobiSasuke",
+  "entry": "index.html",
+  "category": "puzzle",
+  "tags": ["merge", "physics", "cats", "daily", "casual"],
+  "players": 1,
+  "orientation": "portrait",
+  "offline": true,
+  "modes": [
+    {
+      "id": "free",
+      "label": "Free play"
+    },
+    {
+      "id": "daily",
+      "label": "Daily challenge",
+      "seeded": true,
+      "seed": "UTC date YYYY-MM-DD"
+    }
+  ],
+  "scoring": {
+    "primary": "score",
+    "direction": "desc",
+    "fields": {
+      "score": "Integer. Merge points (with chain multiplier) plus a crest bonus for the highest tier reached.",
+      "highestTier": "Integer 0–11. 0 means no cat was placed. 1 is Mote, 11 is Rokumon. Use this for tier leaderboards.",
+      "highestTierId": "Stable id: mote, kit, pip, miso, nori, mochi, sora, hana, kumo, yuki, rokumon, or null.",
+      "highestTierName": "Display name of the highest tier, or null.",
+      "mode": "free or daily.",
+      "seed": "UTC date YYYY-MM-DD when mode is daily, otherwise null.",
+      "merges": "Number of successful merges in the run.",
+      "maxCombo": "Longest chain. A chain is merges within 1.2 seconds of each other.",
+      "reason": "overflow when the stack stays above the limit line. gameOver is not sent if the player leaves early.",
+      "durationMs": "Run length in milliseconds.",
+      "undosUsed": "Undos spent this run. Free play allows 3, daily allows 1."
+    }
+  },
+  "hub": {
+    "global": "window.Hub",
+    "postMessage": {
+      "source": "rokumon-hub",
+      "game": "rokumon-cats"
+    },
+    "methods": ["ready", "score", "event", "gameOver"]
+  }
+}
